@@ -1,7 +1,4 @@
 <?php
-// Lee la cookie del tema o usa 'redhat' por defecto
-$theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'redhat';
-
 // Directorio de subida
 $targetDir = __DIR__ . '/upload/';
 
@@ -36,6 +33,7 @@ if (isset($_GET['view'])) {
 }
 
 // ---- Lógica de Paginación y Búsqueda ----
+
 $allFiles = array_diff(scandir($targetDir), ['.', '..']);
 $xmlFiles = [];
 
@@ -60,6 +58,7 @@ array_multisort(
     SORT_DESC,
     $xmlFiles
 );
+
 
 $totalFiles = count($xmlFiles);
 
@@ -88,22 +87,21 @@ $filesToShow = array_slice($xmlFiles, $offset, $perPage);
     <title>Archivos cargados</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="theme-<?= htmlspecialchars($theme) ?>">
+<body>
     <div class="container">
         <header>
-            <a href="index.php">
-            <img src="Red_Hat_Logo_2019.svg" alt="Logo" class="logo">
-            </a>
             <h1>Archivos cargados</h1>
         </header>
         <main>
             <?php if (!empty($message)) echo "<p>$message</p>"; ?>
             <?php if ($viewFileContent !== null) { ?>
                 <h2><?= $message ?></h2>
-                <pre><?= $viewFileContent ?></pre>
+                <pre style='text-align:left; background:#f0f0f0; padding:1rem; border:1px solid #ccc; max-height:400px; overflow:auto;'>
+                    <?= $viewFileContent ?>
+                </pre>
                 <a href='list_files.php' class='btn'>Cerrar vista</a>
             <?php } else { ?>
-                <form method="GET" class="search-form">
+                <form method="GET" style="margin-bottom: 1rem;">
                     <input type="text" name="search" placeholder="Buscar por nombre..." value="<?= htmlspecialchars($searchQuery) ?>">
                     <button type="submit" class="btn">Buscar</button>
                 </form>
@@ -111,12 +109,12 @@ $filesToShow = array_slice($xmlFiles, $offset, $perPage);
                 <?php if (empty($xmlFiles)) { ?>
                     <p>No hay archivos XML cargados.</p>
                 <?php } else { ?>
-                    <?php if (empty($filesToShow) && !empty($searchQuery)) { ?>
+                    <?php if (empty($filesToShow)) { ?>
                         <p>No se encontraron archivos con el término de búsqueda "<?= htmlspecialchars($searchQuery) ?>".</p>
                     <?php } else { ?>
-                        <div class="list-controls">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                             <p>Mostrando <?= count($filesToShow) ?> de <?= $totalFiles ?> archivos.</p>
-                            <form method="GET" class="per-page-form">
+                            <form method="GET" style="display: inline-block;">
                                 <label for="per_page">Archivos por página:</label>
                                 <select name="per_page" id="per_page" onchange="this.form.submit()">
                                     <option value="20" <?= $perPage == 20 ? 'selected' : '' ?>>20</option>
@@ -124,35 +122,31 @@ $filesToShow = array_slice($xmlFiles, $offset, $perPage);
                                     <option value="100" <?= $perPage == 100 ? 'selected' : '' ?>>100</option>
                                     <option value="200" <?= $perPage == 200 ? 'selected' : '' ?>>200</option>
                                 </select>
-                                <input type="hidden" name="page" value="1">
+                                <input type="hidden" name="page" value="<?= $page ?>">
                                 <input type="hidden" name="search" value="<?= htmlspecialchars($searchQuery) ?>">
                             </form>
                         </div>
         
-                        <table>
-                            <thead>
+                        <table border="1" cellpadding="10" cellspacing="0" style="margin: 0 auto;">
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Tamaño</th>
+                                <th>Fecha</th>
+                                <th>Acciones</th>
+                            </tr>
+                            <?php foreach ($filesToShow as $file) {
+                                $filePath = $targetDir . $file; ?>
                                 <tr>
-                                    <th>Nombre</th>
-                                    <th>Tamaño</th>
-                                    <th>Fecha</th>
-                                    <th>Acciones</th>
+                                    <td><?= htmlspecialchars($file) ?></td>
+                                    <td><?= filesize($filePath) ?> bytes</td>
+                                    <td><?= date("Y-m-d H:i:s", filemtime($filePath)) ?></td>
+                                    <td>
+                                        <a href="upload/<?= urlencode($file) ?>" download>Descargar</a> |
+                                        <a href="list_files.php?view=<?= urlencode($file) ?>">Ver</a> |
+                                        <a href="list_files.php?delete=<?= urlencode($file) ?>" onclick="return confirm('¿Seguro que quieres eliminar <?= htmlspecialchars($file) ?>?');">Eliminar</a>
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($filesToShow as $file) {
-                                    $filePath = $targetDir . $file; ?>
-                                    <tr>
-                                        <td><?= htmlspecialchars($file) ?></td>
-                                        <td><?= filesize($filePath) ?> bytes</td>
-                                        <td><?= date("Y-m-d H:i:s", filemtime($filePath)) ?></td>
-                                        <td>
-                                            <a href="upload/<?= urlencode($file) ?>" download>Descargar</a> |
-                                            <a href="list_files.php?view=<?= urlencode($file) ?>">Ver</a> |
-                                            <a href="list_files.php?delete=<?= urlencode($file) ?>" onclick="return confirm('¿Seguro que quieres eliminar <?= htmlspecialchars($file) ?>?');">Eliminar</a>
-                                        </td>
-                                    </tr>
-                                <?php } ?>
-                            </tbody>
+                            <?php } ?>
                         </table>
         
                         <div class="pagination">
@@ -175,16 +169,5 @@ $filesToShow = array_slice($xmlFiles, $offset, $perPage);
             <a href="index.php" class="btn">Volver al inicio</a>
         </main>
     </div>
-    <script>
-        function changeTheme(theme) {
-            document.body.className = '';
-            if (theme === 'sri') {
-                document.body.classList.add('theme-sri');
-            } else {
-                document.body.classList.add('theme-redhat');
-            }
-            document.cookie = "theme=" + theme + "; path=/; max-age=" + 60*60*24*30;
-        }
-    </script>
 </body>
 </html>

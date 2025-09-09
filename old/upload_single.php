@@ -1,5 +1,4 @@
 <?php
-// Lee la cookie del tema o usa 'redhat' por defecto
 $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'redhat';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['xmlFile'])) {
@@ -30,12 +29,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['xmlFile'])) {
     <title>Cargar archivo XML</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="theme-<?= htmlspecialchars($theme) ?>">
+<body>
     <div class="container">
         <header>
-            <a href="index.php">
-            <img src="Red_Hat_Logo_2019.svg" alt="Logo" class="logo">
-            </a>
             <h1>Cargar archivo XML (unitario)</h1>
         </header>
         <main>
@@ -47,10 +43,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['xmlFile'])) {
             <a href="index.php" class="btn">Volver al inicio</a>
         </main>
     </div>
-    <script>
-        function changeTheme(theme) {
-            document.cookie = "theme=" + theme + "; path=/; max-age=" + 60*60*24*30;
-        }
-    </script>
 </body>
 </html>

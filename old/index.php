@@ -1,5 +1,5 @@
 <?php
-// Lee la cookie del tema o usa 'redhat' por defecto
+// Para guardar la preferencia del tema
 $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'redhat';
 ?>
 <!DOCTYPE html>
@@ -13,13 +13,11 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'redhat';
 <body class="theme-<?= htmlspecialchars($theme) ?>">
     <div class="container">
         <header>
-            <a href="index.php">
-            <img src="Red_Hat_Logo_2019.svg" alt="Logo" class="logo">
-            </a>
+            <img src="red_hat_logo.svg" alt="Logo" class="logo">
             <h1>Gestor de Archivos XML</h1>
         </header>
         <main>
-            <div class="theme-selector">
+            <div style="margin-bottom: 2rem;">
                 <label for="theme-selector">Selecciona un tema:</label>
                 <select id="theme-selector" onchange="changeTheme(this.value)">
                     <option value="redhat" <?= $theme == 'redhat' ? 'selected' : '' ?>>Tipo Red Hat</option>
@@ -46,7 +44,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'redhat';
             }
 
             // Guarda la preferencia en una cookie para recordarla en futuras visitas
-            document.cookie = "theme=" + theme + "; path=/; max-age=" + 60*60*24*30;
+            document.cookie = "theme=" + theme + "; path=/";
         }
     </script>
 </body>
