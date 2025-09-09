@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['xmlFiles'])) {
     <div class="container">
         <header>
             <a href="index.php">
-            <img src="Red_Hat_Logo_2019.svg" alt="Logo" class="logo">
+            <img src="logo/Red_Hat_Logo_2019.svg" alt="Logo" class="logo">
             </a>
             <h1>Cargar archivos XML (masivo)</h1>
         </header>

@@ -14,7 +14,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'redhat';
     <div class="container">
         <header>
             <a href="index.php">
-            <img src="Red_Hat_Logo_2019.svg" alt="Logo" class="logo">
+            <img src="logo/Red_Hat_Logo_2019.svg" alt="Logo" class="logo">
             </a>
             <h1>Gestor de Archivos XML</h1>
         </header>

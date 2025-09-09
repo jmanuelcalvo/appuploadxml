@@ -92,7 +92,7 @@ $filesToShow = array_slice($xmlFiles, $offset, $perPage);
     <div class="container">
         <header>
             <a href="index.php">
-            <img src="Red_Hat_Logo_2019.svg" alt="Logo" class="logo">
+            <img src="logo/Red_Hat_Logo_2019.svg" alt="Logo" class="logo">
             </a>
             <h1>Archivos cargados</h1>
         </header>
