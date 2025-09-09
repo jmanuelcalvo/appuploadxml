@@ -1,4 +1,6 @@
 <?php
+$theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'redhat';
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['xmlFile'])) {
     $file = $_FILES['xmlFile'];
     $targetDir = __DIR__ . '/upload/';

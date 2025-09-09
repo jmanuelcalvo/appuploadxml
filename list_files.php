@@ -1,10 +1,13 @@
 <?php
+// Directorio de subida
 $targetDir = __DIR__ . '/upload/';
+
+// Aseguramos que el directorio exista
 if (!is_dir($targetDir)) {
     mkdir($targetDir, 0777, true);
 }
 
-// Eliminar archivo si se recibe la petición
+// Lógica para eliminar archivo
 if (isset($_GET['delete'])) {
     $fileToDelete = basename($_GET['delete']);
     $filePath = $targetDir . $fileToDelete;
@@ -16,7 +19,58 @@ if (isset($_GET['delete'])) {
     }
 }
 
-$files = array_diff(scandir($targetDir), ['.', '..']);
+// Vista de archivo seleccionado
+$viewFileContent = null;
+if (isset($_GET['view'])) {
+    $fileToView = basename($_GET['view']);
+    $filePath = $targetDir . $fileToView;
+    if (file_exists($filePath)) {
+        $viewFileContent = htmlspecialchars(file_get_contents($filePath));
+        $message = "Viendo archivo: " . htmlspecialchars($fileToView);
+    } else {
+        $message = "El archivo no existe.";
+    }
+}
+
+// ---- Lógica de Paginación ----
+
+// Obtenemos todos los archivos y filtramos los directorios especiales
+$allFiles = array_diff(scandir($targetDir), ['.', '..']);
+$xmlFiles = [];
+
+// Filtramos solo archivos XML
+foreach ($allFiles as $file) {
+    if (pathinfo($file, PATHINFO_EXTENSION) === 'xml') {
+        $xmlFiles[] = $file;
+    }
+}
+
+// Ordenamos los archivos por fecha de modificación, del más nuevo al más viejo
+array_multisort(
+    array_map('filemtime', array_map(function($f) use ($targetDir) { return $targetDir . $f; }, $xmlFiles)),
+    SORT_DESC,
+    $xmlFiles
+);
+
+
+$totalFiles = count($xmlFiles);
+
+// Cantidad de archivos por página (obtenida de la URL o valor por defecto)
+$perPage = isset($_GET['per_page']) && is_numeric($_GET['per_page']) ? (int)$_GET['per_page'] : 20;
+$perPage = in_array($perPage, [20, 50, 100, 200]) ? $perPage : 20;
+
+// Página actual (obtenida de la URL o valor por defecto)
+$page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
+$page = max(1, $page); // Aseguramos que la página sea al menos 1
+
+$totalPages = ceil($totalFiles / $perPage);
+
+// Calculamos el inicio de la paginación
+$offset = ($page - 1) * $perPage;
+
+// Obtenemos los archivos para la página actual
+$filesToShow = array_slice($xmlFiles, $offset, $perPage);
+
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -33,50 +87,69 @@ $files = array_diff(scandir($targetDir), ['.', '..']);
         </header>
         <main>
             <?php if (!empty($message)) echo "<p>$message</p>"; ?>
-            <?php if (empty($files)) { ?>
-                <p>No hay archivos cargados.</p>
+            <?php if ($viewFileContent !== null) { ?>
+                <h2><?= $message ?></h2>
+                <pre style='text-align:left; background:#f0f0f0; padding:1rem; border:1px solid #ccc; max-height:400px; overflow:auto;'>
+                    <?= $viewFileContent ?>
+                </pre>
+                <a href='list_files.php' class='btn'>Cerrar vista</a>
             <?php } else { ?>
-                <table border="1" cellpadding="10" cellspacing="0" style="margin: 0 auto;">
-                    <tr>
-                        <th>Nombre</th>
-                        <th>Tamaño</th>
-                        <th>Fecha</th>
-                        <th>Acciones</th>
-                    </tr>
-                    <?php foreach ($files as $file) { 
-                        $filePath = $targetDir . $file;
-                        ?>
+                <?php if (empty($xmlFiles)) { ?>
+                    <p>No hay archivos XML cargados.</p>
+                <?php } else { ?>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <p>Mostrando <?= count($filesToShow) ?> de <?= $totalFiles ?> archivos.</p>
+                        <form method="GET" style="display: inline-block;">
+                            <label for="per_page">Archivos por página:</label>
+                            <select name="per_page" id="per_page" onchange="this.form.submit()">
+                                <option value="20" <?= $perPage == 20 ? 'selected' : '' ?>>20</option>
+                                <option value="50" <?= $perPage == 50 ? 'selected' : '' ?>>50</option>
+                                <option value="100" <?= $perPage == 100 ? 'selected' : '' ?>>100</option>
+                                <option value="200" <?= $perPage == 200 ? 'selected' : '' ?>>200</option>
+                            </select>
+                            <input type="hidden" name="page" value="<?= $page ?>">
+                        </form>
+                    </div>
+
+                    <table border="1" cellpadding="10" cellspacing="0" style="margin: 0 auto;">
                         <tr>
-                            <td><?= htmlspecialchars($file) ?></td>
-                            <td><?= filesize($filePath) ?> bytes</td>
-                            <td><?= date("Y-m-d H:i:s", filemtime($filePath)) ?></td>
-                            <td>
-                                <a href="upload/<?= urlencode($file) ?>" download>Descargar</a> |
-                                <a href="list_files.php?view=<?= urlencode($file) ?>">Ver</a> |
-                                <a href="list_files.php?delete=<?= urlencode($file) ?>" onclick="return confirm('¿Seguro que quieres eliminar <?= htmlspecialchars($file) ?>?');">Eliminar</a>
-                            </td>
+                            <th>Nombre</th>
+                            <th>Tamaño</th>
+                            <th>Fecha</th>
+                            <th>Acciones</th>
                         </tr>
-                    <?php } ?>
-                </table>
+                        <?php foreach ($filesToShow as $file) {
+                            $filePath = $targetDir . $file; ?>
+                            <tr>
+                                <td><?= htmlspecialchars($file) ?></td>
+                                <td><?= filesize($filePath) ?> bytes</td>
+                                <td><?= date("Y-m-d H:i:s", filemtime($filePath)) ?></td>
+                                <td>
+                                    <a href="upload/<?= urlencode($file) ?>" download>Descargar</a> |
+                                    <a href="list_files.php?view=<?= urlencode($file) ?>">Ver</a> |
+                                    <a href="list_files.php?delete=<?= urlencode($file) ?>" onclick="return confirm('¿Seguro que quieres eliminar <?= htmlspecialchars($file) ?>?');">Eliminar</a>
+                                </td>
+                            </tr>
+                        <?php } ?>
+                    </table>
+
+                    <div class="pagination">
+                        <?php if ($totalPages > 1) { ?>
+                            <?php if ($page > 1) { ?>
+                                <a href="?page=<?= $page - 1 ?>&per_page=<?= $perPage ?>">&laquo; Anterior</a>
+                            <?php } ?>
+                            <?php for ($i = 1; $i <= $totalPages; $i++) { ?>
+                                <a href="?page=<?= $i ?>&per_page=<?= $perPage ?>" class="<?= ($i == $page) ? 'active' : '' ?>"><?= $i ?></a>
+                            <?php } ?>
+                            <?php if ($page < $totalPages) { ?>
+                                <a href="?page=<?= $page + 1 ?>&per_page=<?= $perPage ?>">Siguiente &raquo;</a>
+                            <?php } ?>
+                        <?php } ?>
+                    </div>
+                <?php } ?>
             <?php } ?>
             <a href="index.php" class="btn">Volver al inicio</a>
-
-            <?php
-            // Vista de archivo seleccionado
-            if (isset($_GET['view'])) {
-                $fileToView = basename($_GET['view']);
-                $filePath = $targetDir . $fileToView;
-                if (file_exists($filePath)) {
-                    echo "<h2>Viendo archivo: " . htmlspecialchars($fileToView) . "</h2>";
-                    echo "<pre style='text-align:left; background:#f0f0f0; padding:1rem; border:1px solid #ccc; max-height:400px; overflow:auto;'>";
-                    echo htmlspecialchars(file_get_contents($filePath));
-                    echo "</pre>";
-                    echo "<a href='list_files.php' class='btn'>Cerrar vista</a>";
-                }
-            }
-            ?>
         </main>
     </div>
 </body>
 </html>
-

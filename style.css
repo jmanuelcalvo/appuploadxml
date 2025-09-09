@@ -1,8 +1,28 @@
+/* Variables CSS - Definimos los colores base */
+:root {
+    /* Tema Red Hat por defecto */
+    --primary-color: #EE0000;
+    --secondary-color: #CC0000;
+    --background-color: #F5F5F5;
+    --text-color: #151515;
+    --text-button-color: #FFFFFF;
+}
+
+/* Tema SRI */
+.theme-sri {
+    --primary-color: #0163a3;
+    --secondary-color: #014c80; /* Un azul más oscuro para el hover */
+    --background-color: #FFFFFF;
+    --text-color: #333;
+    --text-button-color: #FFFFFF;
+}
+
+/* Estilos base de la página (no cambian entre temas) */
 body {
     margin: 0;
     font-family: "Red Hat Display", Arial, sans-serif;
-    background-color: #F5F5F5;
-    color: #151515;
+    background-color: var(--background-color);
+    color: var(--text-color);
 }
 
 .container {
@@ -22,7 +42,7 @@ header {
 }
 
 h1 {
-    color: #EE0000;
+    color: var(--primary-color);
     font-size: 2rem;
     margin: 0;
 }
@@ -33,11 +53,12 @@ main {
     gap: 1rem;
 }
 
+/* Estilos de botones que usan las variables */
 .btn {
     display: block;
     padding: 1rem;
-    background-color: #EE0000;
-    color: #FFFFFF;
+    background-color: var(--primary-color);
+    color: var(--text-button-color);
     text-decoration: none;
     border-radius: 8px;
     font-size: 1.1rem;
@@ -45,5 +66,5 @@ main {
 }
 
 .btn:hover {
-    background-color: #CC0000;
+    background-color: var(--secondary-color);
 }
